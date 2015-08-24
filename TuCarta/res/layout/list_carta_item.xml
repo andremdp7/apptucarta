@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal" >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="100dp"
+        android:orientation="vertical"
+        android:paddingLeft="5dp" >
+
+        <TextView
+            android:id="@+id/nombre_itemCarta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="bottom"
+            android:paddingBottom="2dp"
+            android:textStyle="bold"
+            android:textSize="15dp"
+            android:text="TextView"
+            android:textColor="#EE8E00" />
+
+        <TextView
+            android:id="@+id/descp_itemCarta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="top"
+            android:paddingTop="2dp"
+            android:paddingBottom="3dp"
+            android:text="TextView"
+            android:textColor="#C04680" />
+        
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/precio_itemCarta"
+        android:layout_width="100dp"
+        android:layout_height="match_parent"
+        android:layout_marginLeft="-100dp"
+        android:paddingLeft="5dp"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:text="S/.0.00" />
+
+</LinearLayout>

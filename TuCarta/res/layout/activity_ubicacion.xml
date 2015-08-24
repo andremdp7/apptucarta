@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent" >
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="5dp"
+        android:text="¿Dónde te encuentras?"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+    
+    <ImageView
+        android:id="@+id/imagebtn_restaurant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/restaurant"
+        android:adjustViewBounds="true"
+        android:scaleType="fitStart"
+        android:layout_marginTop="45dp"
+        android:layout_marginLeft="35dp"
+        android:layout_marginRight="35dp"
+        android:layout_centerHorizontal="true" />
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/imagebtn_restaurant"
+        android:layout_alignBottom="@+id/imagebtn_restaurant"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:text="En el restaurant"
+        android:textColor="#FFFFFF" />
+
+
+    <ImageView
+        android:id="@+id/imagebtn_calle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:src="@drawable/btn_ubication_street"
+        android:layout_below="@+id/imagebtn_restaurant"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:adjustViewBounds="true"
+        android:scaleType="fitStart"
+        android:layout_marginLeft="35dp"
+        android:layout_marginRight="35dp"/>
+    
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/imagebtn_calle"
+        android:layout_alignBottom="@+id/imagebtn_calle"
+        android:layout_margin="10dp"
+        android:gravity="center"
+        android:text="En la calle"
+        android:textColor="#FFFFFF" />
+
+</RelativeLayout>

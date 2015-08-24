@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.jvm.tucarta"
+    android:versionCode="1"
+    android:versionName="1.0" >
+
+    <uses-sdk
+        android:minSdkVersion="8"
+        android:targetSdkVersion="16" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/AppTheme" >
+        <activity
+            android:name="com.jvm.tucarta.BienvenidaActivity"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            
+        </activity>
+        <activity
+            android:name="com.jvm.tucarta.LoginActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize|stateVisible" >           
+        </activity>
+        <activity
+            android:name="com.jvm.tucarta.RegisterActivity"
+            android:label="@string/app_name"
+            android:windowSoftInputMode="adjustResize|stateVisible" >            
+        </activity>
+        <activity
+            android:name="com.jvm.tucarta.UbicacionActivity"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="com.jvm.tucarta.LugaresActivity"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="com.jvm.tucarta.CartaListViewActivity"
+            android:label="@string/app_name" >
+        </activity>
+        <activity
+            android:name="com.jvm.tucarta.CartaActivity"
+            android:label="@string/app_name"
+            android:theme="@android:style/Theme.Light.NoTitleBar" >
+            
+        </activity>
+    </application>
+    
+    <uses-feature android:name="android.hardware.camera"
+                  android:required="true" />
+
+</manifest>
