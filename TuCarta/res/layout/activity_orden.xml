@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layout_orden"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#FFFFFF" >
+    
+    <LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="wrap_content"
+	    android:orientation="horizontal" >
+	    
+	    <TextView
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+				android:layout_marginRight="160dp"
+				android:paddingLeft="5dp"
+	            android:text="Nombre"
+	            android:textStyle="bold"
+	            android:textColor="#000000" />
+	
+	    <TextView
+	        android:layout_width="50dp"
+	        android:layout_height="match_parent"
+	        android:layout_marginLeft="-160dp"
+	        android:gravity="center"
+	        android:textStyle="bold"
+	        android:text="Cant." />
+	   
+	    <TextView
+	        android:layout_width="110dp"
+	        android:layout_height="match_parent"
+	        android:paddingLeft="5dp"
+	        android:gravity="center"
+	        android:textStyle="bold"
+	        android:text="Precio" />
+	
+	</LinearLayout>
+
+    <ListView
+        android:id="@+id/list_orden"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginBottom="100dp">
+    </ListView>
+    
+    <LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="50dp"
+	    android:orientation="horizontal" 
+	    android:layout_marginTop="-100dp">
+	    
+	    <TextView
+	            android:layout_width="match_parent"
+	            android:layout_height="wrap_content"
+				android:layout_marginRight="110dp"
+				android:paddingLeft="5dp"
+	            android:text="Total"
+	            android:textStyle="bold"
+	            android:textColor="#000000" />
+	   
+	    <TextView
+	        android:id="@+id/total_ordenActivity"
+	        android:layout_width="110dp"
+	        android:layout_height="match_parent"
+	        android:layout_marginLeft="-110dp"
+	        android:paddingLeft="5dp"
+	        android:gravity="center"
+	        android:textStyle="bold"
+	        android:text="S/. 0.00" />
+	
+	</LinearLayout>
+
+    <LinearLayout
+	    android:layout_width="match_parent"
+	    android:layout_height="50dp"
+	    android:orientation="horizontal"
+	     >
+
+        
+        <Button
+        android:id="@+id/ingresar_orden_btn"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="CONFIRMAR ORDEN"/>
+        
+	</LinearLayout>
+</LinearLayout>

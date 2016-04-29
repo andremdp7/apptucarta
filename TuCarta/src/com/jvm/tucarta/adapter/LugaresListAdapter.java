@@ -4,11 +4,14 @@ import java.util.ArrayList;
 
 import com.jvm.tucarta.R;
 import com.jvm.tucarta.model.Lugar;
+import com.koushikdutta.ion.Ion;
 
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.OvershootInterpolator;
+import android.view.animation.ScaleAnimation;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -55,7 +58,13 @@ public class LugaresListAdapter extends BaseAdapter{
 		((TextView) convertView.findViewById(R.id.descp_lugar)).setText(placeSelected.getDescripcion());
 		
 		ImageView img = (ImageView) convertView.findViewById(R.id.imagen_lugar);
-		img.setImageResource(placeSelected.getImagen());
+
+		Ion.with(img)
+		//.placeholder(R.drawable.loading)
+		//.error(R.drawable.)
+		//.animateLoad(R.anim.rotate)
+		//.animateIn(R.anim.fade)
+		.load(placeSelected.getImagen());
 		
 		return convertView;
 		

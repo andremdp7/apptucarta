@@ -2,12 +2,27 @@ package com.jvm.tucarta;
 
 import java.util.ArrayList;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.widget.SearchView;
+import com.google.gson.Gson;
+import com.jvm.tucarta.LoginActivity.LoginUsuario;
 import com.jvm.tucarta.adapter.LugaresListAdapter;
+import com.jvm.tucarta.connection.ConnectionManager;
+import com.jvm.tucarta.forms.LoginRequest;
+import com.jvm.tucarta.forms.LugarListaResponse;
 import com.jvm.tucarta.model.Lugar;
+import com.jvm.tucarta.model.SesionActual;
+import com.jvm.tucarta.model.Usuario;
+import com.jvm.tucarta.services.AsyncCall;
+import com.jvm.tucarta.services.ConstanteServicio;
+import com.jvm.tucarta.services.Servicio;
 
+import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
@@ -27,7 +42,7 @@ public class LugaresActivity extends SherlockActivity implements SearchView.OnQu
 		setContentView(R.layout.activity_lugares);
 		setTheme(R.style.Theme_Sherlock_Light_DarkActionBar);
 		
-		mostrarLugares();
+		invocarServicioListarLugares();
 	
 	}
 	
@@ -62,41 +77,94 @@ public class LugaresActivity extends SherlockActivity implements SearchView.OnQu
     	return super.onCreateOptionsMenu(menu);
     }
     
-    /*Metodo para mostrar los lugares para comer*/
-    public void mostrarLugares() {
+    /*Metodo para buscar lugares para comer*/
+    public void invocarServicioListarLugares() {
     	
-    	todos_lugares = cargarLugaresHardcode();
-    	
-		lugaresList = (ListView) findViewById(R.id.lista_lugares);
-		lugaresList.setAdapter(new LugaresListAdapter(todos_lugares, this));
-		lugaresList.setOnItemClickListener(new OnItemClickListener() {
-			@Override
-			public void onItemClick(AdapterView<?> parent, View view,
-					int position, long id) {
-				//abrir actividad de carta aqui
-				if (position==3){
-					Intent cartaIntent = new Intent(getApplicationContext(), CartaActivity.class);
-					startActivity(cartaIntent);
+    	if (ConnectionManager.connect(this)) {
+			// construir llamada al servicio
+			String request = Servicio.ListaLugares;
+			
+			new ListaLugares(this).execute(request,"");
+			
+		} else {
+			// Se muestra mensaje de error de conexion con el servicio
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle("Error");
+			builder.setMessage(ConstanteServicio.MENSAJE_PROBLEMA_CONEXION);
+			builder.setCancelable(false);
+			builder.setPositiveButton("Ok", null);
+			builder.create();
+			builder.show();	
+		}
+    
+    }
+    
+    public class ListaLugares extends AsyncCall {
+
+		public ListaLugares(Activity activity) {
+			super(activity,true);
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+
+			System.out.println("Recibido: " + result.toString());
+			try {
+				Gson gson = new Gson();				
+				LugarListaResponse listaResponse = gson.fromJson(result, LugarListaResponse.class);
+	            
+				if ("00".equals(listaResponse.getResponse_code())) {
+					
+					todos_lugares = (ArrayList<Lugar>) listaResponse.getLugares();
+					ocultarMensajeProgreso();
+					mostrarLugares();
+				} else {
+					ocultarMensajeProgreso();
+					String msjError = listaResponse.getMensaje();
+					mostrarError(msjError,false);
 				}
+			} catch (Exception e) {
+				ocultarMensajeProgreso();
+				mostrarError(e.toString(),true);
 			}
-		});
+		}
 	}
 	
+	private void mostrarError(String mensaje, boolean excepcion) {
+
+		if (excepcion )System.out.println(mensaje);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Error");
+		if (excepcion) builder.setMessage(ConstanteServicio.ERROR_RECIBIR_MENSAJE);
+		else builder.setMessage(mensaje);
+		builder.setCancelable(false);
+		builder.setPositiveButton("Aceptar", null);
+		builder.create();
+		builder.show();
+	}
     
-    private ArrayList<Lugar> cargarLugaresHardcode(){
-    	ArrayList<Lugar> listaLugares = new ArrayList<Lugar>();
-    	Lugar lg1 = new Lugar(1,"Starbucks","Lugar para tomar cafe",R.drawable.starbucks);
-    	Lugar lg2 = new Lugar(2,"Chilli's","Lugar para comer",R.drawable.chilis);
-    	Lugar lg3 = new Lugar(3,"TGI Fridays","Lugar para comer y beber. Tiene televisores para partidos de fútbol",R.drawable.tgi_fridays);
-    	Lugar lg4 = new Lugar(4,"Tanta","Tanta es tu sala, comedor o terraza. Celebramos en familia la cocina y su diversidad",R.drawable.tanta);
+    /*Metodo para mostrar los lugares para comer*/
+    private void mostrarLugares() {
     	
-    	listaLugares.add(lg1);
-    	listaLugares.add(lg2);
-    	listaLugares.add(lg3);
-    	listaLugares.add(lg4);
-    			
-    	return listaLugares;
-    }
+    	if (todos_lugares != null){
+    	
+			lugaresList = (ListView) findViewById(R.id.lista_lugares);
+			lugaresList.setAdapter(new LugaresListAdapter(todos_lugares, this));
+			lugaresList.setOnItemClickListener(new OnItemClickListener() {
+				@Override
+				public void onItemClick(AdapterView<?> parent, View view,
+						int position, long id) {
+					//abrir actividad de carta aqui
+					int id_lugar = todos_lugares.get(position).getId();
+					
+					Intent cartaIntent = new Intent(getApplicationContext(), CartaActivity.class);
+					cartaIntent.putExtra("id_lugar",id_lugar);
+					startActivity(cartaIntent);
+					
+				}
+			});
+    	}
+	}
 
 	@Override
 	public boolean onQueryTextSubmit(String query) {

@@ -1,9 +1,25 @@
 package com.jvm.tucarta;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import com.google.gson.Gson;
+import com.jvm.tucarta.LoginActivity.LoginUsuario;
+import com.jvm.tucarta.connection.ConnectionManager;
+import com.jvm.tucarta.forms.LoginRequest;
+import com.jvm.tucarta.forms.UsuarioRegistrarRequest;
+import com.jvm.tucarta.model.SesionActual;
+import com.jvm.tucarta.model.Usuario;
+import com.jvm.tucarta.services.AsyncCall;
+import com.jvm.tucarta.services.ConstanteServicio;
+import com.jvm.tucarta.services.Servicio;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -13,6 +29,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -51,7 +68,7 @@ public class RegisterActivity extends Activity{
 		mEmailView.setText(mEmail);
 
 		mPasswordView = (EditText) findViewById(R.id.register_password);
-		mPasswordView
+		/*mPasswordView
 				.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 					@Override
 					public boolean onEditorAction(TextView textView, int id,
@@ -63,6 +80,7 @@ public class RegisterActivity extends Activity{
 						return false;
 					}
 				});
+				*/
 
 		mRegisterFormView = findViewById(R.id.register_form);
 		mRegisterStatusView = findViewById(R.id.register_status);
@@ -72,6 +90,8 @@ public class RegisterActivity extends Activity{
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View view) {
+						InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+					    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 						attemptRegister();
 					}
 				});
@@ -123,7 +143,11 @@ public class RegisterActivity extends Activity{
 			mUserView.setError(getString(R.string.error_field_required));
 			focusView = mUserView;
 			cancel = true;
-		} 
+		} else if  (mUser.length() < 5) {
+			mUserView.setError(getString(R.string.error_invalid_username));
+			focusView = mUserView;
+			cancel = true;
+		}
 
 		// Check for a valid email address.
 		if (TextUtils.isEmpty(mEmail)) {
@@ -145,8 +169,10 @@ public class RegisterActivity extends Activity{
 			// perform the user login attempt.
 			mRegisterStatusMessageView.setText(R.string.login_progress_signing_in);
 			showProgress(true);
-			mAuthTask = new UserRegisterTask();
-			mAuthTask.execute((Void) null);
+			
+			invocarServicioRegistrar();
+			//mAuthTask = new UserRegisterTask();
+			//mAuthTask.execute((Void) null);
 		}
 	}
 
@@ -189,6 +215,86 @@ public class RegisterActivity extends Activity{
 			mRegisterStatusView.setVisibility(show ? View.VISIBLE : View.GONE);
 			mRegisterFormView.setVisibility(show ? View.GONE : View.VISIBLE);
 		}
+	}
+	
+	private void invocarServicioRegistrar(){
+		if (ConnectionManager.connect(this)) {
+			// construir llamada al servicio
+			String request = Servicio.Registro;
+			
+			UsuarioRegistrarRequest registroRequest = new UsuarioRegistrarRequest();
+			registroRequest.setUsuario(mUser);
+			registroRequest.setPassword(mPassword);
+			registroRequest.setCorreo(mEmail);
+			Gson gson = new Gson();
+			
+			new RegistrarUsuario(this).execute(request,gson.toJson(registroRequest));
+			
+		} else {
+			showProgress(false);
+			// Se muestra mensaje de error de conexion con el servicio
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle("Error");
+			builder.setMessage(ConstanteServicio.MENSAJE_PROBLEMA_CONEXION);
+			builder.setCancelable(false);
+			builder.setPositiveButton("Ok", null);
+			builder.create();
+			builder.show();	
+		}
+	}
+	
+	public class RegistrarUsuario extends AsyncCall {
+
+		public RegistrarUsuario(Activity activity) {
+			super(activity,false);
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+
+			System.out.println("Recibido: " + result.toString());
+			try {
+				JSONObject jsonObject = new JSONObject(result);
+				String respuesta = jsonObject.getString("response_code");
+				if ("00".equals(respuesta)) {
+					/*setear usuario actual*/
+					SesionActual.usuario = new Usuario();
+					SesionActual.usuario.setId_usuario(jsonObject.getInt("id_usuario"));
+					SesionActual.usuario.setNombre(mUser);
+					SesionActual.usuario.setFecha_registro(jsonObject.getString("fecha_registro"));
+					SesionActual.usuario.setCorreo(mEmail);
+					
+					showProgress(false);
+					
+					Intent ubicacionIntent = new Intent(getApplicationContext(), UbicacionActivity.class);
+					startActivity(ubicacionIntent);
+				} else {
+					showProgress(false);
+					ocultarMensajeProgreso();
+					String msjError = jsonObject.getString("mensaje");
+					mostrarError(msjError,false);
+				}
+			} catch (JSONException e) {
+				ocultarMensajeProgreso();
+				mostrarError(e.toString(),true);
+			} catch (NullPointerException ex) {
+				ocultarMensajeProgreso();
+				mostrarError(ex.toString(),true);
+			}
+		}
+	}
+	
+	private void mostrarError(String mensaje, boolean excepcion) {
+		showProgress(false);
+		if (excepcion )System.out.println(mensaje);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Error");
+		if (excepcion) builder.setMessage(ConstanteServicio.ERROR_RECIBIR_MENSAJE);
+		else builder.setMessage(mensaje);
+		builder.setCancelable(false);
+		builder.setPositiveButton("Aceptar", null);
+		builder.create();
+		builder.show();
 	}
 
 	/**

@@ -3,6 +3,7 @@ package com.jvm.tucarta.adapter;
 import java.util.ArrayList;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,10 +18,14 @@ public class ItemCartaAdapter extends BaseAdapter{
 	
 	private ArrayList<ItemCarta> items;
 	Context context;
+	String colorNombre = "#000000";
+	String colorDescripcion = "#000000";
 	
-	public ItemCartaAdapter(ArrayList<ItemCarta> items, Context c) {
+	public ItemCartaAdapter(ArrayList<ItemCarta> items, Context c, String colorNombre, String colorDescripcion) {
 		this.items = items;
 		context = c;
+		this.colorNombre = colorNombre;
+		this.colorDescripcion = colorDescripcion;
 	}
 
 	@Override
@@ -51,8 +56,14 @@ public class ItemCartaAdapter extends BaseAdapter{
 					null);
 		}
 		
-		((TextView) convertView.findViewById(R.id.nombre_itemCarta)).setText(item.getNombre());
-		((TextView) convertView.findViewById(R.id.descp_itemCarta)).setText(item.getDescripcion());
+		TextView nombre_itemCarta = ((TextView) convertView.findViewById(R.id.nombre_itemCarta));
+		nombre_itemCarta.setText(item.getNombre());
+		nombre_itemCarta.setTextColor(Color.parseColor(colorNombre));
+		
+		TextView descp_itemCarta = ((TextView) convertView.findViewById(R.id.descp_itemCarta));
+		descp_itemCarta.setText(item.getDescripcion());
+		descp_itemCarta.setTextColor(Color.parseColor(colorDescripcion));
+		
 		((TextView) convertView.findViewById(R.id.precio_itemCarta)).setText("S/." + String.format("%.2f", item.getPrecio()));
 		
 		

@@ -2,18 +2,35 @@ package com.jvm.tucarta;
 
 import java.util.ArrayList;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import com.actionbarsherlock.app.SherlockActivity;
 import com.actionbarsherlock.view.MenuItem;
 import com.actionbarsherlock.widget.SearchView;
+import com.google.gson.Gson;
+import com.jvm.tucarta.LugaresActivity.ListaLugares;
 import com.jvm.tucarta.adapter.ItemCartaAdapter;
+import com.jvm.tucarta.connection.ConnectionManager;
+import com.jvm.tucarta.forms.LugarCartaResponse;
+import com.jvm.tucarta.forms.LugarListaResponse;
 import com.jvm.tucarta.model.ItemCarta;
 import com.jvm.tucarta.model.Lugar;
+import com.jvm.tucarta.services.AsyncCall;
+import com.jvm.tucarta.services.ConstanteServicio;
+import com.jvm.tucarta.services.Servicio;
+import com.koushikdutta.ion.Ion;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.AdapterView.OnItemClickListener;
@@ -21,6 +38,12 @@ import android.widget.AdapterView.OnItemClickListener;
 public class CartaActivity extends SherlockActivity implements SearchView.OnQueryTextListener{
 	ArrayList<ItemCarta> todos_itemCarta;
 	ListView itemCartaList;
+	String colorNombre = "#000000";
+	String colorDescripcion = "#000000";
+	
+	ImageView logo;
+	LinearLayout layout;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -28,8 +51,13 @@ public class CartaActivity extends SherlockActivity implements SearchView.OnQuer
 		
 		setContentView(R.layout.activity_carta);
 		setTheme(R.style.Theme_Sherlock_Light_DarkActionBar);
+		layout = (LinearLayout) findViewById(R.id.layout_carta_a);
+		logo = (ImageView) findViewById(R.id.logo_carta_a);
 		
-		mostraritemCarta();
+		Intent intentLugaresActivity = getIntent(); // gets the previously created intent
+		int id_lugar = intentLugaresActivity.getIntExtra("id_lugar",0);
+		
+		invocarServicioCartaLugar(id_lugar);
 	
 	}
 	
@@ -64,24 +92,107 @@ public class CartaActivity extends SherlockActivity implements SearchView.OnQuer
     	return super.onCreateOptionsMenu(menu);
     }
     
+    /*Metodo para obtener items de la carta*/
+    public void invocarServicioCartaLugar(int id_lugar) {
+    	
+    	if (ConnectionManager.connect(this)) {
+			// construir llamada al servicio
+			String request = Servicio.CartaLugarSelec;
+			
+			JSONObject jsonObject = new JSONObject();
+			try {
+				jsonObject.put("id_lugar", id_lugar);
+			} catch (JSONException e) {
+				
+			}
+			new CartaLugarSelec(this).execute(request,jsonObject.toString());
+			
+		} else {
+			// Se muestra mensaje de error de conexion con el servicio
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle("Error");
+			builder.setMessage(ConstanteServicio.MENSAJE_PROBLEMA_CONEXION);
+			builder.setCancelable(false);
+			builder.setPositiveButton("Ok", null);
+			builder.create();
+			builder.show();	
+		}
+    
+    }
+    
+    public class CartaLugarSelec extends AsyncCall {
+
+		public CartaLugarSelec(Activity activity) {
+			super(activity,true);
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+
+			System.out.println("Recibido: " + result.toString());
+			try {
+				Gson gson = new Gson();				
+				LugarCartaResponse cartaResponse = gson.fromJson(result, LugarCartaResponse.class);
+	            
+				if ("00".equals(cartaResponse.getResponse_code())) {
+					
+					todos_itemCarta = (ArrayList<ItemCarta>) cartaResponse.getItems();
+					layout.setBackgroundColor(Color.parseColor(cartaResponse.getColor_fondo()));
+					Ion.with(logo).load(cartaResponse.getLogo_url());
+					colorNombre = cartaResponse.getColor_nombres();
+					colorDescripcion = cartaResponse.getColor_descripcion();
+					
+					ocultarMensajeProgreso();
+					mostraritemCarta(colorNombre, colorDescripcion);
+				} else {
+					ocultarMensajeProgreso();
+					String msjError = cartaResponse.getMensaje();
+					mostrarError(msjError,false);
+				}
+			} catch (Exception e) {
+				ocultarMensajeProgreso();
+				mostrarError(e.toString(),true);
+			}
+		}
+	}
+	
+	private void mostrarError(String mensaje, boolean excepcion) {
+
+		if (excepcion )System.out.println(mensaje);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Error");
+		if (excepcion) builder.setMessage(ConstanteServicio.ERROR_RECIBIR_MENSAJE);
+		else builder.setMessage(mensaje);
+		builder.setCancelable(false);
+		builder.setPositiveButton("Aceptar", null);
+		builder.create();
+		builder.show();
+	}
+    
     /*Metodo para mostrar los itemCarta para comer*/
-    public void mostraritemCarta() {
+    public void mostraritemCarta(String colorNombre, String colorDescripcion) {
     	
-    	todos_itemCarta = cargaritemCartaHardcode();
-    	
+    	if (todos_itemCarta != null){
 		itemCartaList = (ListView) findViewById(R.id.list_carta_a);
-		itemCartaList.setAdapter(new ItemCartaAdapter(todos_itemCarta, this));
+		itemCartaList.setAdapter(new ItemCartaAdapter(todos_itemCarta, this, colorNombre, colorDescripcion));
 		itemCartaList.setOnItemClickListener(new OnItemClickListener() {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view,
 					int position, long id) {
-				//mostrar detalle del item		
+				//mostrar detalle del item
+				ItemCarta item = todos_itemCarta.get(position);
+				Intent intent = new Intent(getApplicationContext(), CartaItemActivity.class);
+				Bundle mBundle = new Bundle();  
+		        mBundle.putSerializable("item",item);  
+		        intent.putExtras(mBundle);
+	            startActivityForResult(intent, 0);	
 				
 			}
 		});
+    	}
 	}
 	
-    
+    /*
     private ArrayList<ItemCarta> cargaritemCartaHardcode(){
     	ArrayList<ItemCarta> listaitemCarta = new ArrayList<ItemCarta>();
     	
@@ -128,6 +239,7 @@ public class CartaActivity extends SherlockActivity implements SearchView.OnQuer
     			
     	return listaitemCarta;
     }
+    */
 
 	@Override
 	public boolean onQueryTextSubmit(String query) {
@@ -141,7 +253,7 @@ public class CartaActivity extends SherlockActivity implements SearchView.OnQuer
 	public boolean onQueryTextChange(String newText) {
 		
 		if (newText.isEmpty()){
-			itemCartaList.setAdapter(new ItemCartaAdapter(todos_itemCarta, this));
+			itemCartaList.setAdapter(new ItemCartaAdapter(todos_itemCarta, this, colorNombre, colorDescripcion));
 		} else{
 			filtraritemCarta(newText);
 		}
@@ -157,7 +269,7 @@ public class CartaActivity extends SherlockActivity implements SearchView.OnQuer
 			}
 			
 		}
-		itemCartaList.setAdapter(new ItemCartaAdapter(lista_aux, this));
+		itemCartaList.setAdapter(new ItemCartaAdapter(lista_aux, this, colorNombre, colorDescripcion));
 	}
 	
 

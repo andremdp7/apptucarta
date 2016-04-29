@@ -1,9 +1,27 @@
 package com.jvm.tucarta;
 
+import java.util.HashMap;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+
+import com.google.gson.Gson;
+import com.jvm.tucarta.connection.ConnectionManager;
+import com.jvm.tucarta.forms.LoginRequest;
+import com.jvm.tucarta.model.SesionActual;
+import com.jvm.tucarta.model.Usuario;
+import com.jvm.tucarta.services.AsyncCall;
+import com.jvm.tucarta.services.ConstanteServicio;
+import com.jvm.tucarta.services.Servicio;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Build;
@@ -13,6 +31,7 @@ import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -60,6 +79,7 @@ public class LoginActivity extends Activity {
 		mUserView.setText(mUser);
 
 		mPasswordView = (EditText) findViewById(R.id.password);
+		/*
 		mPasswordView
 				.setOnEditorActionListener(new TextView.OnEditorActionListener() {
 					@Override
@@ -72,6 +92,7 @@ public class LoginActivity extends Activity {
 						return false;
 					}
 				});
+				*/
 
 		mLoginFormView = findViewById(R.id.login_form);
 		mLoginStatusView = findViewById(R.id.login_status);
@@ -81,6 +102,8 @@ public class LoginActivity extends Activity {
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View view) {
+						InputMethodManager imm = (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+					    imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
 						attemptLogin();
 					}
 				});
@@ -125,7 +148,7 @@ public class LoginActivity extends Activity {
 			cancel = true;
 		}
 
-		// Check for a valid email address.
+		// Check for a valid user.
 		if (TextUtils.isEmpty(mUser)) {
 			mUserView.setError(getString(R.string.error_field_required));
 			focusView = mUserView;
@@ -141,8 +164,10 @@ public class LoginActivity extends Activity {
 			// perform the user login attempt.
 			mLoginStatusMessageView.setText(R.string.login_progress_signing_in);
 			showProgress(true);
-			mAuthTask = new UserLoginTask();
-			mAuthTask.execute((Void) null);
+			
+			invocarServicioLogin();
+			//mAuthTask = new UserLoginTask();
+			//mAuthTask.execute((Void) null);
 		}
 	}
 
@@ -186,6 +211,87 @@ public class LoginActivity extends Activity {
 			mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
 		}
 	}
+	
+	private void invocarServicioLogin(){
+		
+		if (ConnectionManager.connect(this)) {
+			// construir llamada al servicio
+			String request = Servicio.Login;
+			
+			LoginRequest loginRequest = new LoginRequest();
+			loginRequest.setUsuario(mUser);
+			loginRequest.setPassword(mPassword);
+			Gson gson = new Gson();
+			
+			new LoginUsuario(this).execute(request,gson.toJson(loginRequest));
+			
+		} else {
+			showProgress(false);
+			// Se muestra mensaje de error de conexion con el servicio
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle("Error");
+			builder.setMessage(ConstanteServicio.MENSAJE_PROBLEMA_CONEXION);
+			builder.setCancelable(false);
+			builder.setPositiveButton("Ok", null);
+			builder.create();
+			builder.show();	
+		}
+	}
+	
+	public class LoginUsuario extends AsyncCall {
+
+		public LoginUsuario(Activity activity) {
+			super(activity,false);
+		}
+
+		@Override
+		protected void onPostExecute(String result) {
+
+			System.out.println("Recibido: " + result.toString());
+			try {
+				JSONObject jsonObject = new JSONObject(result);
+				String respuesta = jsonObject.getString("response_code");
+				if ("00".equals(respuesta)) {
+					/*setear usuario actual*/
+					SesionActual.usuario = new Usuario();
+					SesionActual.usuario.setId_usuario(jsonObject.getInt("id_usuario"));
+					SesionActual.usuario.setNombre(mUser);
+					SesionActual.usuario.setFecha_registro(jsonObject.getString("fecha_registro"));
+					
+					showProgress(false);
+					
+					Intent ubicacionIntent = new Intent(getApplicationContext(), UbicacionActivity.class);
+					startActivity(ubicacionIntent);
+				} else {
+					showProgress(false);
+					ocultarMensajeProgreso();
+					String msjError = jsonObject.getString("mensaje");
+					mostrarError(msjError,false);
+				}
+			} catch (JSONException e) {
+				ocultarMensajeProgreso();
+				mostrarError(e.toString(),true);
+			} catch (NullPointerException ex) {
+				ocultarMensajeProgreso();
+				mostrarError(ex.toString(),true);
+			}
+		}
+	}
+	
+	private void mostrarError(String mensaje, boolean excepcion) {
+		showProgress(false);
+		if (excepcion )System.out.println(mensaje);
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("Error");
+		if (excepcion) builder.setMessage(ConstanteServicio.ERROR_RECIBIR_MENSAJE);
+		else builder.setMessage(mensaje);
+		builder.setCancelable(false);
+		builder.setPositiveButton("Aceptar", null);
+		builder.create();
+		builder.show();
+	}
+
+	
 
 	/**
 	 * Represents an asynchronous login/registration task used to authenticate
@@ -196,25 +302,16 @@ public class LoginActivity extends Activity {
 		protected Boolean doInBackground(Void... params) {
 			// TODO: attempt authentication against a network service.
 
+			
 			try {
 				// Simulate network access.
 				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				return false;
 			}
-
-			/*
-			for (String credential : DUMMY_CREDENTIALS) {
-				String[] pieces = credential.split(":");
-				if (pieces[0].equals(mUser)) {
-					// Account exists, return true if the password matches.
-					return pieces[1].equals(mPassword);
-				}
-			}
-			*/
-
-			// TODO: register the new account here.
 			return true;
+			
+			
 		}
 
 		@Override
@@ -226,9 +323,7 @@ public class LoginActivity extends Activity {
 				Intent ubicacionIntent = new Intent(getApplicationContext(), UbicacionActivity.class);
 				startActivity(ubicacionIntent);
 			} else {
-				mPasswordView
-						.setError(getString(R.string.error_incorrect_password));
-				mPasswordView.requestFocus();
+				
 			}
 		}
 

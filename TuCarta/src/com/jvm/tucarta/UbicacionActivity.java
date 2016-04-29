@@ -1,5 +1,11 @@
 package com.jvm.tucarta;
 
+import java.util.ArrayList;
+
+import com.jvm.tucarta.camera.CameraActivity;
+import com.jvm.tucarta.model.ItemCarta;
+import com.jvm.tucarta.model.SesionActual;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -17,8 +23,12 @@ public class UbicacionActivity extends Activity{
 				new View.OnClickListener() {
 					@Override
 					public void onClick(View view) {
-						Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-			            startActivityForResult(intent, 0);
+						//Intent intent = new Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
+			            //startActivityForResult(intent, 0);
+						SesionActual.orden = new ArrayList<ItemCarta>();
+						SesionActual.ordenIngresada = false;
+						Intent cameraIntent = new Intent(getApplicationContext(), CameraActivity.class);
+					    startActivity(cameraIntent);
 					}
 				});
 	
@@ -35,7 +45,7 @@ public class UbicacionActivity extends Activity{
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 	      // TODO Auto-generated method stub
 	      super.onActivityResult(requestCode, resultCode, data);
-	      Intent cartaIntent = new Intent(getApplicationContext(), CartaListViewActivity.class);
+	      Intent cartaIntent = new Intent(getApplicationContext(), CartaOrdenActivity.class);
 	      startActivity(cartaIntent);
 	      
 	   }
